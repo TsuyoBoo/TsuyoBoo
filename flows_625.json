@@ -1,0 +1,1340 @@
+[
+    {
+        "id": "e37e00d0.0ff8d",
+        "type": "tab",
+        "label": "死活監視",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "bec482ad.77d71",
+        "type": "inject",
+        "z": "e37e00d0.0ff8d",
+        "name": "温湿度死活監視",
+        "repeat": "900",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 130,
+        "y": 120,
+        "wires": [
+            [
+                "57388ad9.e45ff4",
+                "8ca5d951.67d588"
+            ]
+        ]
+    },
+    {
+        "id": "57388ad9.e45ff4",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "SQL作成",
+        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_tem_hum_measurement_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 20 MINUTE;\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 120,
+        "wires": [
+            [
+                "fe8026be.f466d8"
+            ]
+        ]
+    },
+    {
+        "id": "fe8026be.f466d8",
+        "type": "mysql",
+        "z": "e37e00d0.0ff8d",
+        "mydb": "1848aaaf.9865bd",
+        "name": "tbl_sensor_type",
+        "x": 500,
+        "y": 120,
+        "wires": [
+            [
+                "ac2cd23c.6147"
+            ]
+        ]
+    },
+    {
+        "id": "ac2cd23c.6147",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "tbl_sensor_type情報取得",
+        "func": "let ary = msg.payload;\nlet err01 = flow.get('SENERR_01')||0;\nmsg.count1 = 1;\nif (ary[0].count > 0 ){\n    if (err01 == 1) {  //エラーからの復帰\n        msg.count1 = 2;\n    }\n    flow.set('SENERR_01',0);\n    flow.set('SENNAME_01', ary[0].sensor_registration_name);\n} else {\n    flow.set('SENERR_01',1);\n    if(err01 === 0) {\n       msg.count1 = 0;\n    }\n}\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_01',update);\nflow.set('Count_01',ary[0].count);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 120,
+        "wires": [
+            [
+                "4ad5b51c.aacb6c"
+            ]
+        ]
+    },
+    {
+        "id": "4ad5b51c.aacb6c",
+        "type": "switch",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "property": "count1",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 890,
+        "y": 120,
+        "wires": [
+            [
+                "e7974a4b.6dfb18"
+            ],
+            [
+                "99bc18d8.6c0988"
+            ],
+            [
+                "8b1d0d3f.1afc"
+            ]
+        ]
+    },
+    {
+        "id": "99bc18d8.6c0988",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_01')||'00137a1000008163';\nmsg.topic = '【警告】温湿度センサー（' +sename+ '）でエラーが発生';\nmsg.payload = '温湿度センサー（' +sename+ '）からのデータが送信されていません。\\n温湿度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 100,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "e0810ce1.d745e",
+        "type": "inject",
+        "z": "e37e00d0.0ff8d",
+        "name": "照度死活監視",
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 220,
+        "wires": [
+            [
+                "f928710d.f0f4b",
+                "1d6175cd.776c1a"
+            ]
+        ]
+    },
+    {
+        "id": "f928710d.f0f4b",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "SQL作成",
+        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_illuminance_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE;\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 220,
+        "wires": [
+            [
+                "a9f01361.08d4b"
+            ]
+        ]
+    },
+    {
+        "id": "a9f01361.08d4b",
+        "type": "mysql",
+        "z": "e37e00d0.0ff8d",
+        "mydb": "1848aaaf.9865bd",
+        "name": "tbl_sensor_type",
+        "x": 500,
+        "y": 220,
+        "wires": [
+            [
+                "6b8d2e77.3f3b8"
+            ]
+        ]
+    },
+    {
+        "id": "6b8d2e77.3f3b8",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "tbl_sensor_type情報取得",
+        "func": "let ary = msg.payload;\nlet err02 = flow.get('SENERR_02')||0;\nmsg.count2 = 1;\nif (ary[0].count > 0 ){\n    if (err02 == 1) {  //エラーからの復帰\n        msg.count2 = 2;\n    }\n    flow.set('SENERR_02',0);\n    flow.set('SENNAME_02', ary[0].sensor_registration_name);\n} else {\n    flow.set('SENERR_02',1);\n    if(err02 === 0) {\n       msg.count2 = 0;\n    }\n}\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_02',update);\nflow.set('Count_02',ary[0].count);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 220,
+        "wires": [
+            [
+                "6b4df352.f610cc"
+            ]
+        ]
+    },
+    {
+        "id": "6b4df352.f610cc",
+        "type": "switch",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "property": "count2",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 890,
+        "y": 220,
+        "wires": [
+            [
+                "56f39891.60e0f8"
+            ],
+            [
+                "69724013.9fb94"
+            ],
+            [
+                "44b103b6.914cac"
+            ]
+        ]
+    },
+    {
+        "id": "69724013.9fb94",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_02') || '00137a1000003096'; \nmsg.topic = '【警告】照度センサー（'+sename+ '）でエラーが発生';\nmsg.payload = '照度センサー（' + sename + '）からのデータが送信されていません。\\n照度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1144,
+        "y": 220,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "1afcb90.51f4f47",
+        "type": "inject",
+        "z": "e37e00d0.0ff8d",
+        "name": "3軸加速度死活監視",
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 337,
+        "wires": [
+            [
+                "871dc279.a3559",
+                "5ed5a246.57b29c"
+            ]
+        ]
+    },
+    {
+        "id": "871dc279.a3559",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "SQL作成",
+        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a1000020d6e';\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 337,
+        "wires": [
+            [
+                "d371baab.b46e88"
+            ]
+        ]
+    },
+    {
+        "id": "d371baab.b46e88",
+        "type": "mysql",
+        "z": "e37e00d0.0ff8d",
+        "mydb": "1848aaaf.9865bd",
+        "name": "tbl_sensor_type",
+        "x": 500,
+        "y": 337,
+        "wires": [
+            [
+                "585b5819.15ba38"
+            ]
+        ]
+    },
+    {
+        "id": "585b5819.15ba38",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "tbl_sensor_type情報取得",
+        "func": "let ary = msg.payload;\nlet err03 = flow.get('SENERR_03')||0;\nmsg.count3 = 1;\nif (ary[0].count > 0 ){\n    if (err03 == 1) {  //エラーからの復帰\n        msg.count3 = 2;\n    }\n    flow.set('SENERR_03',0);\n    flow.set('SENNAME_03', ary[0].sensor_registration_name);\n} else {\n    flow.set('SENERR_03',1);\n    if(err03 === 0) {\n       msg.count3 = 0;\n    }\n}\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_03',update);\nflow.set('Count_03',ary[0].count);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 337,
+        "wires": [
+            [
+                "f1f83af5.b34348"
+            ]
+        ]
+    },
+    {
+        "id": "f1f83af5.b34348",
+        "type": "switch",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "property": "count3",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 890,
+        "y": 337,
+        "wires": [
+            [
+                "c46a34d7.892e58"
+            ],
+            [
+                "85b5e658.a7eac8"
+            ],
+            [
+                "63d31ed.f538ae"
+            ]
+        ]
+    },
+    {
+        "id": "85b5e658.a7eac8",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_03') || '00137a1000020d6e'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' + sename + '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1144,
+        "y": 337,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "944f4a22.8f2588",
+        "type": "inject",
+        "z": "e37e00d0.0ff8d",
+        "name": "3軸加速度死活監視",
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 477,
+        "wires": [
+            [
+                "1380700e.d6544",
+                "2fbee020.da215"
+            ]
+        ]
+    },
+    {
+        "id": "1380700e.d6544",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "SQL作成",
+        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a1000020d6f';\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 477,
+        "wires": [
+            [
+                "ea73d4db.8ee648"
+            ]
+        ]
+    },
+    {
+        "id": "ea73d4db.8ee648",
+        "type": "mysql",
+        "z": "e37e00d0.0ff8d",
+        "mydb": "1848aaaf.9865bd",
+        "name": "tbl_sensor_type",
+        "x": 500,
+        "y": 477,
+        "wires": [
+            [
+                "a72a60be.0c46f"
+            ]
+        ]
+    },
+    {
+        "id": "a72a60be.0c46f",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "tbl_sensor_type情報取得",
+        "func": "let ary = msg.payload;\nlet err04 = flow.get('SENERR_04')||0;\nmsg.count4 = 1;\nif (ary[0].count > 0 ){\n    if (err04 == 1) {  //エラーからの復帰\n        msg.count4 = 2;\n    }\n    flow.set('SENERR_04',0);\n    flow.set('SENNAME_04', ary[0].sensor_registration_name);\n} else {\n    flow.set('SENERR_04',1);\n    if(err04 === 0) {\n       msg.count4 = 0;\n    }\n}\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_04',update);\nflow.set('Count_04',ary[0].count);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 477,
+        "wires": [
+            [
+                "918033ba.21c28"
+            ]
+        ]
+    },
+    {
+        "id": "918033ba.21c28",
+        "type": "switch",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "property": "count4",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 890,
+        "y": 477,
+        "wires": [
+            [
+                "2788b22.c063a4e"
+            ],
+            [
+                "66070aa1.f47e94"
+            ],
+            [
+                "fdb4092b.204828"
+            ]
+        ]
+    },
+    {
+        "id": "66070aa1.f47e94",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_04') || '00137a1000020d6f'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 480,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "a2a865b6.8eeda8",
+        "type": "inject",
+        "z": "e37e00d0.0ff8d",
+        "name": "3軸加速度死活監視",
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 597,
+        "wires": [
+            [
+                "dd9145ca.6f2ad8",
+                "276114ef.bb106c"
+            ]
+        ]
+    },
+    {
+        "id": "dd9145ca.6f2ad8",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "SQL作成",
+        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a1000020d70';\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 597,
+        "wires": [
+            [
+                "b4dfd798.18b0a8"
+            ]
+        ]
+    },
+    {
+        "id": "b4dfd798.18b0a8",
+        "type": "mysql",
+        "z": "e37e00d0.0ff8d",
+        "mydb": "1848aaaf.9865bd",
+        "name": "tbl_sensor_type",
+        "x": 500,
+        "y": 597,
+        "wires": [
+            [
+                "ae11bf8f.1020f"
+            ]
+        ]
+    },
+    {
+        "id": "ae11bf8f.1020f",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "tbl_sensor_type情報取得",
+        "func": "let ary = msg.payload;\nlet err05 = flow.get('SENERR_05')||0;\nmsg.count5 = 1;\nif (ary[0].count > 0 ){\n    if (err05 == 1) {  //エラーからの復帰\n        msg.count5 = 2;\n    }\n    flow.set('SENERR_05',0);\n    flow.set('SENNAME_05', ary[0].sensor_registration_name);\n} else {\n    flow.set('SENERR_05',1);\n    if(err05 === 0) {\n       msg.count5 = 0;\n    }\n}\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_05',update);\nflow.set('Count_05',ary[0].count);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 597,
+        "wires": [
+            [
+                "7ceb96cc.cefb98"
+            ]
+        ]
+    },
+    {
+        "id": "7ceb96cc.cefb98",
+        "type": "switch",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "property": "count5",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 890,
+        "y": 597,
+        "wires": [
+            [
+                "c573f611.0d2338"
+            ],
+            [
+                "7b618fb9.8feb5"
+            ],
+            [
+                "fc20d36e.dd08c"
+            ]
+        ]
+    },
+    {
+        "id": "d0f75145.bbeb7",
+        "type": "inject",
+        "z": "e37e00d0.0ff8d",
+        "name": "3軸加速度死活監視",
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 727,
+        "wires": [
+            [
+                "1eabddb.bc81322",
+                "f21b7f55.b72c1"
+            ]
+        ]
+    },
+    {
+        "id": "1eabddb.bc81322",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "SQL作成",
+        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a1000020d6d';\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 727,
+        "wires": [
+            [
+                "7bdc1356.07526c"
+            ]
+        ]
+    },
+    {
+        "id": "7bdc1356.07526c",
+        "type": "mysql",
+        "z": "e37e00d0.0ff8d",
+        "mydb": "1848aaaf.9865bd",
+        "name": "tbl_sensor_type",
+        "x": 500,
+        "y": 727,
+        "wires": [
+            [
+                "870551fa.e07f9"
+            ]
+        ]
+    },
+    {
+        "id": "870551fa.e07f9",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "tbl_sensor_type情報取得",
+        "func": "let ary = msg.payload;\nlet err06 = flow.get('SENERR_06')||0;\nmsg.count6 = 1;\n\nif (ary[0].count > 0 ){\n    if (err06 == 1) {  //エラーからの復帰\n        msg.count6 = 2;\n    }\n    flow.set('SENERR_06',0);\n    flow.set('SENNAME_06', ary[0].sensor_registration_name);\n    //msg.count6 = 1;\n} else {\n    flow.set('SENERR_06',1);\n    if(err06 === 0) {\n       msg.count6 = 0;\n    }\n}\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_06',update);\nflow.set('Count_06',ary[0].count);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 727,
+        "wires": [
+            [
+                "5f25fb48.9a6944"
+            ]
+        ]
+    },
+    {
+        "id": "5f25fb48.9a6944",
+        "type": "switch",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "property": "count6",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 890,
+        "y": 727,
+        "wires": [
+            [
+                "c78a2afb.6059d8"
+            ],
+            [
+                "9d13528a.ca151"
+            ],
+            [
+                "5e710a9.ad8cff4"
+            ]
+        ]
+    },
+    {
+        "id": "9d13528a.ca151",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_06') || '00137a1000020d6d'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 730,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "c78a2afb.6059d8",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 1130,
+        "y": 690,
+        "wires": []
+    },
+    {
+        "id": "8b1d0d3f.1afc",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_01')||'00137a1000008163';\nmsg.topic = '【情報】温湿度センサー（' +sename+ '）復帰しました';\nmsg.payload = '温湿度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 140,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "44b103b6.914cac",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_02') || '00137a1000003096'; \nmsg.topic = '【情報】照度センサー（' +sename+ '）復帰しました';\nmsg.payload = '照度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1144,
+        "y": 260,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "63d31ed.f538ae",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_03') || '00137a1000020d6e'; \nmsg.topic = '【情報】3軸加速度センサー（' +sename+ '）復帰しました';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 380,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "fdb4092b.204828",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_04') || '00137a1000020d6f'; \nmsg.topic = '【情報】3軸加速度センサー（' +sename+ '）復帰しました';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 517,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "fc20d36e.dd08c",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_05') || '00137a1000020d70'; \nmsg.topic = '【情報】3軸加速度センサー（' +sename+ '）復帰';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 643,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "7b618fb9.8feb5",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_05') || '00137a1000020d70'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 603,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "5e710a9.ad8cff4",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_06') || '00137a1000020d6d'; \nmsg.topic = '【情報】3軸加速度センサー（' +sename+ '）復帰しました。';\nmsg.payload = '3軸加速度センサー（' + sename + '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 770,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "8ca5d951.67d588",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 190,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "1d6175cd.776c1a",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 190,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "5ed5a246.57b29c",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 170,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "2fbee020.da215",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 170,
+        "y": 437,
+        "wires": []
+    },
+    {
+        "id": "276114ef.bb106c",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 170,
+        "y": 654,
+        "wires": []
+    },
+    {
+        "id": "f21b7f55.b72c1",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 190,
+        "y": 790,
+        "wires": []
+    },
+    {
+        "id": "e7974a4b.6dfb18",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1130,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "56f39891.60e0f8",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 1130,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "c46a34d7.892e58",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 1130,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "2788b22.c063a4e",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 1130,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "c573f611.0d2338",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 1130,
+        "y": 563,
+        "wires": []
+    },
+    {
+        "id": "1aabc7b47ac9e596",
+        "type": "inject",
+        "z": "e37e00d0.0ff8d",
+        "name": "3軸加速度死活監視",
+        "repeat": "3600",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 860,
+        "wires": [
+            [
+                "2aeb252b863997da",
+                "2b6edb2d0d8dc231"
+            ]
+        ]
+    },
+    {
+        "id": "2aeb252b863997da",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "SQL作成",
+        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a10000086f1';\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 860,
+        "wires": [
+            [
+                "59b9cc8eab315f0c"
+            ]
+        ]
+    },
+    {
+        "id": "59b9cc8eab315f0c",
+        "type": "mysql",
+        "z": "e37e00d0.0ff8d",
+        "mydb": "1848aaaf.9865bd",
+        "name": "tbl_sensor_type",
+        "x": 500,
+        "y": 860,
+        "wires": [
+            [
+                "f8c4505b1773ef7e"
+            ]
+        ]
+    },
+    {
+        "id": "f8c4505b1773ef7e",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "tbl_sensor_type情報取得",
+        "func": "let ary = msg.payload;\nlet err07 = flow.get('SENERR_07')||0;\nmsg.count7 = 1;\n\nif (ary[0].count > 0 ){\n    if (err07 == 1) {  //エラーからの復帰\n        msg.count7 = 2;\n    }\n    flow.set('SENERR_07',0);\n    flow.set('SENNAME_07', ary[0].sensor_registration_name);\n} else {\n    flow.set('SENERR_07',1);\n    if(err07 === 0) {\n       msg.count7 = 0;\n    }\n}\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_07',update);\nflow.set('Count_07',ary[0].count);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 860,
+        "wires": [
+            [
+                "97e274075e418932"
+            ]
+        ]
+    },
+    {
+        "id": "3fa0982d646441ae",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_07') || '00137a10000086f1'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 863,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "db972381a83b2a6d",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 1130,
+        "y": 823,
+        "wires": []
+    },
+    {
+        "id": "20ba4a6b44f80b12",
+        "type": "function",
+        "z": "e37e00d0.0ff8d",
+        "name": "文面設定",
+        "func": "let sename = flow.get('SENNAME_07') || '00137a10000086f1'; \nmsg.topic = '【情報】3軸加速度センサー（'+sename+ '）復帰しました。';\nmsg.payload = '3軸加速度センサー（'+sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 903,
+        "wires": [
+            [
+                "e0fc58d1890a43bd"
+            ]
+        ]
+    },
+    {
+        "id": "2b6edb2d0d8dc231",
+        "type": "debug",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 190,
+        "y": 923,
+        "wires": []
+    },
+    {
+        "id": "e0fc58d1890a43bd",
+        "type": "e-mail",
+        "z": "e37e00d0.0ff8d",
+        "server": "smtp.gmail.com",
+        "port": "465",
+        "authtype": "BASIC",
+        "saslformat": true,
+        "token": "oauth2Response.access_token",
+        "secure": true,
+        "tls": true,
+        "name": "",
+        "dname": "",
+        "x": 1430,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "97e274075e418932",
+        "type": "switch",
+        "z": "e37e00d0.0ff8d",
+        "name": "",
+        "property": "count7",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 890,
+        "y": 860,
+        "wires": [
+            [
+                "db972381a83b2a6d"
+            ],
+            [
+                "3fa0982d646441ae"
+            ],
+            [
+                "20ba4a6b44f80b12"
+            ]
+        ]
+    },
+    {
+        "id": "1848aaaf.9865bd",
+        "type": "MySQLdatabase",
+        "name": "u9fo72yd0zo6axly",
+        "host": "kfgk8u2ogtoylkq9.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
+        "port": "3306",
+        "db": "u9fo72yd0zo6axly",
+        "tz": "",
+        "charset": "UTF8"
+    }
+]
