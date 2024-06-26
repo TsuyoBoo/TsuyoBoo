@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "postdeploy": "curl -o /app/.node-red/flows.json https://github.com/TsuyoBoo/Warehouse_PoC/blob/master/flows_625.json"
+    "postdeploy": "curl -o /app/.node-red/flows.json https://github.com/TsuyoBoo/Warehouse_PoC/blob/master/flows.json"
   }
 }
