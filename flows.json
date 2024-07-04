@@ -1,1629 +1,771 @@
 [
     {
-        "id": "4de057833c59a457",
+        "id": "5546eb2.8913a14",
         "type": "tab",
-        "label": "死活監視",
+        "label": "花王PoC M＋ FTP連携",
         "disabled": false,
-        "info": ""
+        "info": "照度、温湿度、3軸加速度センサーのデータを毎週月曜日の1時にM＋と\r\nへFTP転送する"
     },
     {
-        "id": "cbc5e8548e631469",
-        "type": "inject",
-        "z": "4de057833c59a457",
-        "name": "温湿度死活監視",
-        "repeat": "900",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 130,
-        "y": 120,
+        "id": "5c9ea8d4.c54658",
+        "type": "catch",
+        "z": "5546eb2.8913a14",
+        "name": "エラー時の処理",
+        "scope": null,
+        "uncaught": false,
+        "x": 180,
+        "y": 140,
         "wires": [
             [
-                "912134b489e34810"
+                "e93dae8a.6be67"
             ]
         ]
     },
     {
-        "id": "912134b489e34810",
+        "id": "50b7bb86.255c94",
         "type": "function",
-        "z": "4de057833c59a457",
-        "name": "SQL作成",
-        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_tem_hum_measurement_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 20 MINUTE;\";\nreturn msg;",
+        "z": "5546eb2.8913a14",
+        "name": "内部用文面設定",
+        "func": "\nmsg.topic='Node-Redでエラーが発生'; //メール件名設定\nmsg.payload = 'FTP転送処理 『' + msg.error.source.name + 'ノード』でエラーが発生しました。\\n\\n' + msg.error.message + '\\n\\n確認してください。\\n';   //本文\nmsg.to = 't.matsumoto@pound4tec.com';\n// メールヘッダー設定\nmsg.headers = '';\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 320,
-        "y": 120,
+        "x": 980,
+        "y": 100,
         "wires": [
             [
-                "f9f587cd574da2ba"
+                "debf13f4.392a7",
+                "7bb58fb057f122d8"
             ]
         ]
     },
     {
-        "id": "f9f587cd574da2ba",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_type",
-        "x": 500,
-        "y": 120,
-        "wires": [
-            [
-                "188f95deaffa36db"
-            ]
-        ]
-    },
-    {
-        "id": "188f95deaffa36db",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_01',update);\nflow.set('Count_01',ary[0].count);\nif (ary[0].count > 0) {\n    flow.set('SENNAME_01', ary[0].sensor_registration_name);\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 710,
-        "y": 120,
-        "wires": [
-            [
-                "deb4c760c9b5f4dd"
-            ]
-        ]
-    },
-    {
-        "id": "ca5b36e46a419e38",
-        "type": "switch",
-        "z": "4de057833c59a457",
-        "name": "",
-        "property": "count1",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "0",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "2",
-                "vt": "str"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 3,
-        "x": 1910,
-        "y": 120,
-        "wires": [
-            [
-                "ad0504fcd46ac263"
-            ],
-            [
-                "c5b73f8afa4893f0"
-            ],
-            [
-                "9dbef01862ce1e15"
-            ]
-        ]
-    },
-    {
-        "id": "c5b73f8afa4893f0",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_01')||'00137a1000008163';\nmsg.topic = '【警告】温湿度センサー（' +sename+ '）でエラーが発生';\nmsg.payload = '温湿度センサー（' +sename+ '）からのデータが送信されていません。\\n温湿度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
-        "y": 120,
-        "wires": [
-            [
-                "526bdf0a90b71bcf"
-            ]
-        ]
-    },
-    {
-        "id": "297cc1dd63a50ef1",
-        "type": "inject",
-        "z": "4de057833c59a457",
-        "name": "照度死活監視",
-        "repeat": "3600",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 140,
-        "y": 240,
-        "wires": [
-            [
-                "90923a9b8ed4e6d5"
-            ]
-        ]
-    },
-    {
-        "id": "90923a9b8ed4e6d5",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "SQL作成",
-        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_illuminance_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE;\";\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 320,
-        "y": 240,
-        "wires": [
-            [
-                "a44540c7f2d1e31a"
-            ]
-        ]
-    },
-    {
-        "id": "a44540c7f2d1e31a",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_type",
-        "x": 500,
-        "y": 240,
-        "wires": [
-            [
-                "0ac81347f37b2487"
-            ]
-        ]
-    },
-    {
-        "id": "0ac81347f37b2487",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_02',update);\nflow.set('Count_02',ary[0].count);\nif (ary[0].count > 0) {\n    flow.set('SENNAME_02', ary[0].sensor_registration_name);\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 710,
-        "y": 240,
-        "wires": [
-            [
-                "c9bcac48e7d94cee"
-            ]
-        ]
-    },
-    {
-        "id": "ee779ca778e0105f",
-        "type": "switch",
-        "z": "4de057833c59a457",
-        "name": "",
-        "property": "count2",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "0",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "2",
-                "vt": "str"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 3,
-        "x": 1910,
-        "y": 240,
-        "wires": [
-            [
-                "5322e301ee913f8a"
-            ],
-            [
-                "d1c03945e32cc948"
-            ],
-            [
-                "37516b210408ee38"
-            ]
-        ]
-    },
-    {
-        "id": "d1c03945e32cc948",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_02') || '00137a1000003096'; \nmsg.topic = '【警告】照度センサー（'+sename+ '）でエラーが発生';\nmsg.payload = '照度センサー（' + sename + '）からのデータが送信されていません。\\n照度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
-        "y": 240,
-        "wires": [
-            [
-                "526bdf0a90b71bcf"
-            ]
-        ]
-    },
-    {
-        "id": "6ccf799a96642bfa",
-        "type": "inject",
-        "z": "4de057833c59a457",
-        "name": "3軸加速度死活監視",
-        "repeat": "3600",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 140,
-        "y": 360,
-        "wires": [
-            [
-                "d515c93b1b9557df"
-            ]
-        ]
-    },
-    {
-        "id": "d515c93b1b9557df",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "SQL作成",
-        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a1000020d6e';\";\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 320,
-        "y": 360,
-        "wires": [
-            [
-                "d1ca8a2c51d1e384"
-            ]
-        ]
-    },
-    {
-        "id": "d1ca8a2c51d1e384",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_type",
-        "x": 500,
-        "y": 360,
-        "wires": [
-            [
-                "f43cb0b5a4fbdbe2"
-            ]
-        ]
-    },
-    {
-        "id": "f43cb0b5a4fbdbe2",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_03',update);\nflow.set('Count_03',ary[0].count);\nif (ary[0].count > 0) {\n    flow.set('SENNAME_03', ary[0].sensor_registration_name);\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 710,
-        "y": 360,
-        "wires": [
-            [
-                "f634cc5e59c31a53"
-            ]
-        ]
-    },
-    {
-        "id": "512ff191f8018d75",
-        "type": "switch",
-        "z": "4de057833c59a457",
-        "name": "",
-        "property": "count3",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "0",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "2",
-                "vt": "str"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 3,
-        "x": 1910,
-        "y": 360,
-        "wires": [
-            [
-                "3c01022c04697ff1"
-            ],
-            [
-                "30c6c348e1af65e1"
-            ],
-            [
-                "57689b627115a174"
-            ]
-        ]
-    },
-    {
-        "id": "30c6c348e1af65e1",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_03') || '00137a1000020d6e'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' + sename + '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
-        "y": 360,
-        "wires": [
-            [
-                "526bdf0a90b71bcf"
-            ]
-        ]
-    },
-    {
-        "id": "4c296def09581b2e",
-        "type": "inject",
-        "z": "4de057833c59a457",
-        "name": "3軸加速度死活監視",
-        "repeat": "3600",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 140,
-        "y": 480,
-        "wires": [
-            [
-                "8e69adf83dda4b28"
-            ]
-        ]
-    },
-    {
-        "id": "8e69adf83dda4b28",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "SQL作成",
-        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a1000020d6f';\";\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 320,
-        "y": 480,
-        "wires": [
-            [
-                "85715297fb3a45a3"
-            ]
-        ]
-    },
-    {
-        "id": "85715297fb3a45a3",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_type",
-        "x": 500,
-        "y": 480,
-        "wires": [
-            [
-                "a1cb4ce30ea77dd8"
-            ]
-        ]
-    },
-    {
-        "id": "a1cb4ce30ea77dd8",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_04',update);\nflow.set('Count_04',ary[0].count);\nif (ary[0].count > 0) {\n    flow.set('SENNAME_04', ary[0].sensor_registration_name);\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 710,
-        "y": 480,
-        "wires": [
-            [
-                "71a517cf0250d15a"
-            ]
-        ]
-    },
-    {
-        "id": "6fcdbb6c8f1fd147",
-        "type": "switch",
-        "z": "4de057833c59a457",
-        "name": "",
-        "property": "count4",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "0",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "2",
-                "vt": "str"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 3,
-        "x": 1910,
-        "y": 480,
-        "wires": [
-            [
-                "2f4c70d3450aac9f"
-            ],
-            [
-                "abb039eb294cbc46"
-            ],
-            [
-                "f384d614a02b933a"
-            ]
-        ]
-    },
-    {
-        "id": "abb039eb294cbc46",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_04') || '00137a1000020d6f'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
-        "y": 480,
-        "wires": [
-            [
-                "526bdf0a90b71bcf"
-            ]
-        ]
-    },
-    {
-        "id": "0327c00920ec1425",
-        "type": "inject",
-        "z": "4de057833c59a457",
-        "name": "3軸加速度死活監視",
-        "repeat": "3600",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 140,
-        "y": 600,
-        "wires": [
-            [
-                "66e8356822028933"
-            ]
-        ]
-    },
-    {
-        "id": "66e8356822028933",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "SQL作成",
-        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a1000020d70';\";\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 320,
-        "y": 600,
-        "wires": [
-            [
-                "9a9c9b060967f87d"
-            ]
-        ]
-    },
-    {
-        "id": "9a9c9b060967f87d",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_type",
-        "x": 500,
-        "y": 600,
-        "wires": [
-            [
-                "36a102099a6daf58"
-            ]
-        ]
-    },
-    {
-        "id": "36a102099a6daf58",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_05',update);\nflow.set('Count_05',ary[0].count);\nif (ary[0].count > 0) {\n    flow.set('SENNAME_05', ary[0].sensor_registration_name);\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 710,
-        "y": 600,
-        "wires": [
-            [
-                "298c751ed2e38fd3"
-            ]
-        ]
-    },
-    {
-        "id": "2f8e7daad25607da",
-        "type": "switch",
-        "z": "4de057833c59a457",
-        "name": "",
-        "property": "count5",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "0",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "2",
-                "vt": "str"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 3,
-        "x": 1910,
-        "y": 600,
-        "wires": [
-            [
-                "d8e17d9560a27605"
-            ],
-            [
-                "ee7f74d009f59768"
-            ],
-            [
-                "bab32020c248dc6b"
-            ]
-        ]
-    },
-    {
-        "id": "79b9cd9ae427d2f1",
-        "type": "inject",
-        "z": "4de057833c59a457",
-        "name": "3軸加速度死活監視",
-        "repeat": "3600",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 140,
-        "y": 720,
-        "wires": [
-            [
-                "a7114cd044bd3ff6"
-            ]
-        ]
-    },
-    {
-        "id": "a7114cd044bd3ff6",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "SQL作成",
-        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a1000020d6d';\";\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 320,
-        "y": 720,
-        "wires": [
-            [
-                "1a79f9661d3d1a52"
-            ]
-        ]
-    },
-    {
-        "id": "1a79f9661d3d1a52",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_type",
-        "x": 500,
-        "y": 720,
-        "wires": [
-            [
-                "b88c6182bcde736f"
-            ]
-        ]
-    },
-    {
-        "id": "b88c6182bcde736f",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_06',update);\nflow.set('Count_06',ary[0].count);\nif (ary[0].count > 0) {\n    flow.set('SENNAME_06', ary[0].sensor_registration_name);\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 710,
-        "y": 720,
-        "wires": [
-            [
-                "cfb518f310471373"
-            ]
-        ]
-    },
-    {
-        "id": "4c4a489b2bf00f2a",
-        "type": "switch",
-        "z": "4de057833c59a457",
-        "name": "",
-        "property": "count6",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "0",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "2",
-                "vt": "str"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 3,
-        "x": 1910,
-        "y": 720,
-        "wires": [
-            [
-                "139994037042814a"
-            ],
-            [
-                "30dccb5d88eda758"
-            ],
-            [
-                "78154227a88758af"
-            ]
-        ]
-    },
-    {
-        "id": "30dccb5d88eda758",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_06') || '00137a1000020d6d'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
-        "y": 720,
-        "wires": [
-            [
-                "526bdf0a90b71bcf"
-            ]
-        ]
-    },
-    {
-        "id": "139994037042814a",
-        "type": "debug",
-        "z": "4de057833c59a457",
-        "name": "",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "x": 2130,
-        "y": 680,
+        "id": "74034ef0.e0b3f",
+        "type": "comment",
+        "z": "5546eb2.8913a14",
+        "name": "エラー発生時",
+        "info": "エラー発生時の処理",
+        "x": 110,
+        "y": 60,
         "wires": []
     },
     {
-        "id": "9dbef01862ce1e15",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_01')||'00137a1000008163';\nmsg.topic = '【情報】温湿度センサー（' +sename+ '）復帰しました';\nmsg.payload = '温湿度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
-        "y": 160,
-        "wires": [
-            [
-                "526bdf0a90b71bcf"
-            ]
-        ]
+        "id": "debf13f4.392a7",
+        "type": "debug",
+        "z": "5546eb2.8913a14",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 1210,
+        "y": 60,
+        "wires": []
     },
     {
-        "id": "37516b210408ee38",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_02') || '00137a1000003096'; \nmsg.topic = '【情報】照度センサー（' +sename+ '）復帰しました';\nmsg.payload = '照度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
-        "y": 280,
-        "wires": [
-            [
-                "526bdf0a90b71bcf"
-            ]
-        ]
-    },
-    {
-        "id": "57689b627115a174",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_03') || '00137a1000020d6e'; \nmsg.topic = '【情報】3軸加速度センサー（' +sename+ '）復帰しました';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
+        "id": "efc77b39.3bd708",
+        "type": "change",
+        "z": "5546eb2.8913a14",
+        "name": "3センサー分ループ",
+        "rules": [
+            {
+                "t": "set",
+                "p": "counter",
+                "pt": "msg",
+                "to": "0",
+                "tot": "num"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 170,
         "y": 400,
         "wires": [
             [
-                "526bdf0a90b71bcf"
+                "4f23341a.c4bccc"
             ]
         ]
     },
     {
-        "id": "f384d614a02b933a",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_04') || '00137a1000020d6f'; \nmsg.topic = '【情報】3軸加速度センサー（' +sename+ '）復帰しました';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
-        "y": 520,
+        "id": "4f23341a.c4bccc",
+        "type": "switch",
+        "z": "5546eb2.8913a14",
+        "name": "ループチェック",
+        "property": "counter",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "lt",
+                "v": "3",
+                "vt": "num"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 420,
+        "y": 400,
         "wires": [
             [
-                "526bdf0a90b71bcf"
+                "6976056b.db3dfc"
+            ],
+            [
+                "88db2057.18a5b"
             ]
         ]
     },
     {
-        "id": "bab32020c248dc6b",
+        "id": "be83963d.108f58",
         "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_05') || '00137a1000020d70'; \nmsg.topic = '【情報】3軸加速度センサー（' +sename+ '）復帰';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "z": "5546eb2.8913a14",
+        "name": "counter +1",
+        "func": "// @ts-ignore\nmsg.counter += 1;\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 2140,
-        "y": 640,
+        "x": 770,
+        "y": 220,
         "wires": [
             [
-                "526bdf0a90b71bcf"
+                "4f23341a.c4bccc"
+            ]
+        ],
+        "info": "// nrlint no-loops:off\n"
+    },
+    {
+        "id": "6257a728.8ca448",
+        "type": "inject",
+        "z": "5546eb2.8913a14",
+        "d": true,
+        "name": "毎日1時実行",
+        "repeat": "",
+        "crontab": "00 01 * * *",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 280,
+        "wires": [
+            [
+                "efc77b39.3bd708"
             ]
         ]
     },
     {
-        "id": "ee7f74d009f59768",
+        "id": "6976056b.db3dfc",
         "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_05') || '00137a1000020d70'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "z": "5546eb2.8913a14",
+        "name": "データ取得SQL作成",
+        "func": "let strsql = '';\n// @ts-ignore\nif (msg.counter === 0) {\n    strsql = \"SELECT user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,illuminance_status,DATE_FORMAT(registration_date,'%Y-%m-%d %H:%i:%s') AS registration_date,DATE_FORMAT(update_date,'%Y-%m-%d %H:%i:%s') aS update_date FROM u9fo72yd0zo6axly.u00001_tbl_illuminance_history WHERE received_date BETWEEN DATE(SYSDATE() + INTERVAL 9 HOUR) - INTERVAL 1 DAY AND DATE(SYSDATE() + INTERVAL 9 HOUR);\";\n} else if (msg.counter === 1) {\n    strsql = \"SELECT user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,temperature,report_type,data_x,data_y,data_z,DATE_FORMAT(registration_date,'%Y-%m-%d %H:%i:%s') AS registration_date,DATE_FORMAT(update_date,'%Y-%m-%d %H:%i:%s') aS update_date FROM  u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date BETWEEN DATE(SYSDATE() + INTERVAL 9 HOUR) - INTERVAL 1 DAY AND DATE(SYSDATE() + INTERVAL 9 HOUR);\";\n} else {\n    strsql = \"SELECT user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,temperature,humidity,DATE_FORMAT(registration_date,'%Y-%m-%d %H:%i:%s') AS registration_date,DATE_FORMAT(update_date,'%Y-%m-%d %H:%i:%s') aS update_date FROM u9fo72yd0zo6axly.u00001_tbl_tem_hum_measurement_history WHERE received_date BETWEEN DATE(SYSDATE() + INTERVAL 9 HOUR) - INTERVAL 1 DAY AND DATE(SYSDATE() + INTERVAL 9 HOUR);\";\n}\nmsg.topic = strsql;\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 2140,
-        "y": 600,
+        "x": 700,
+        "y": 360,
         "wires": [
             [
-                "526bdf0a90b71bcf"
+                "6c148e3d.1963b"
             ]
         ]
     },
     {
-        "id": "78154227a88758af",
+        "id": "8412311e.e31b8",
+        "type": "csv",
+        "z": "5546eb2.8913a14",
+        "name": "照度CSV設定",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "all",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,illuminance_status,registration_date,update_date",
+        "skip": "0",
+        "strings": false,
+        "x": 1180,
+        "y": 320,
+        "wires": [
+            [
+                "2203f19f.ad62fe"
+            ]
+        ]
+    },
+    {
+        "id": "2203f19f.ad62fe",
         "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_06') || '00137a1000020d6d'; \nmsg.topic = '【情報】3軸加速度センサー（' +sename+ '）復帰しました。';\nmsg.payload = '3軸加速度センサー（' + sename + '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
+        "z": "5546eb2.8913a14",
+        "name": "センサファイル名作成",
+        "func": "let date = new Date();\nlet d1 = date.getFullYear() + ('0' + (date.getMonth() + 1)).slice(-2) + ('0' + date.getDate()).slice(-2) + ('0' + date.getHours()).slice(-2) + ('0' + date.getMinutes()).slice(-2) + ('0' + date.getSeconds()).slice(-2) ;\nlet f_name = '';\nlet comname = '';\n\nif (msg.counter === 0) {\n   comname =\"LUX_SENSOR_FNAME\";\n    f_name = \"LUX_SENSOR_\" + d1 + \".csv\";\n} else if (msg.counter === 1) {\n    comname = \"ACC_SENSOR_FNAME\";\n    f_name = \"ACC_SENSOR_\" + d1 + \".csv\";\n} else {\n    comname = \"TEMP_HUM_FNAME\";\n    f_name = \"TEMP_HUM_SENSOR_\" + d1 + \".csv\";\n}\n// @ts-ignore\nflow.set(comname, f_name); //照度ファイル名\n\nmsg.filename = f_name;\nmsg.localFilename = \"/receiving/\" + f_name;\nlet str = msg.payload;\nmsg.payload = str.replace(/\"/g,'');\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 2140,
-        "y": 760,
+        "x": 1420,
+        "y": 360,
         "wires": [
             [
-                "526bdf0a90b71bcf"
+                "b3e6282c.3b9128"
             ]
         ]
     },
     {
-        "id": "ad0504fcd46ac263",
-        "type": "debug",
-        "z": "4de057833c59a457",
-        "name": "",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "x": 2130,
-        "y": 80,
+        "id": "b3e6282c.3b9128",
+        "type": "file",
+        "z": "5546eb2.8913a14",
+        "name": "転送用ファイル作成",
+        "filename": "localFilename",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 1640,
+        "y": 360,
+        "wires": [
+            [
+                "160296a7.fd69b9"
+            ]
+        ]
+    },
+    {
+        "id": "65964900.6fec48",
+        "type": "function",
+        "z": "5546eb2.8913a14",
+        "name": "取得用ファイル名作成",
+        "func": "let comname = '';\nif (msg.counter === 0) {\n   comname = \"LUX_SENSOR_FNAME\";\n} else if (msg.counter === 1) {\n   comname = \"ACC_SENSOR_FNAME\";\n} else {\n   comname = \"TEMP_HUM_FNAME\";\n}\n\n// @ts-ignore\nlet f_name = flow.get(comname);\nmsg.filename = \"/receiving/\" + f_name;\nmsg.localFilename = f_name;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1020,
+        "y": 540,
+        "wires": [
+            [
+                "7768847f.25bd0c"
+            ]
+        ]
+    },
+    {
+        "id": "c61df931.18c3b8",
+        "type": "function",
+        "z": "5546eb2.8913a14",
+        "name": "センサファイル名設定",
+        "func": "let comname = '';\nif (msg.counter === 0) {\n    comname = \"LUX_SENSOR_FNAME\";\n} else if (msg.counter === 1) {\n    comname = \"ACC_SENSOR_FNAME\";\n} else {\n    comname = \"TEMP_HUM_FNAME\";\n}\n// @ts-expect-error\nlet f_name = flow.get(comname);\nmsg.remoteFolder = \"/import/\";\nmsg.filename = msg.remoteFolder + f_name;\nmsg.localFilename = f_name;\n\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1680,
+        "y": 540,
+        "wires": [
+            [
+                "4869d8a1.fb3ea8"
+            ]
+        ]
+    },
+    {
+        "id": "88db2057.18a5b",
+        "type": "change",
+        "z": "5546eb2.8913a14",
+        "name": "counter",
+        "rules": [
+            {
+                "t": "set",
+                "p": "counter",
+                "pt": "msg",
+                "to": "0",
+                "tot": "num"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 660,
+        "y": 440,
+        "wires": [
+            [
+                "e5e16356.69598"
+            ]
+        ]
+    },
+    {
+        "id": "e5e16356.69598",
+        "type": "switch",
+        "z": "5546eb2.8913a14",
+        "name": "check",
+        "property": "counter",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "lt",
+                "v": "3",
+                "vt": "num"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 830,
+        "y": 580,
+        "wires": [
+            [
+                "65964900.6fec48"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "91dcadfa.3bd4",
+        "type": "function",
+        "z": "5546eb2.8913a14",
+        "name": "counter +1",
+        "func": "// @ts-ignore\nmsg.counter += 1;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 910,
+        "y": 460,
+        "wires": [
+            [
+                "e5e16356.69598"
+            ]
+        ],
+        "info": "// nrlint no-loops:off\n"
+    },
+    {
+        "id": "d6d78145.fe142",
+        "type": "comment",
+        "z": "5546eb2.8913a14",
+        "name": "センサーデータ取得処理",
+        "info": "加速度センサ、照度センサ、温湿度センサーの1週間分のデータをテーブルから取得する\n取得したデータをM＋サーバの/home/sensor/receivingへFTP転送する\nM＋サーバの/home/sensor/receivingデータを/home/sensor/importへ移動する\n",
+        "x": 150,
+        "y": 220,
         "wires": []
     },
     {
-        "id": "5322e301ee913f8a",
-        "type": "debug",
-        "z": "4de057833c59a457",
+        "id": "96f911a4.4d444",
+        "type": "inject",
+        "z": "5546eb2.8913a14",
+        "d": true,
         "name": "",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "x": 2130,
-        "y": 200,
-        "wires": []
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 180,
+        "y": 100,
+        "wires": [
+            [
+                "e93dae8a.6be67"
+            ]
+        ]
     },
     {
-        "id": "3c01022c04697ff1",
-        "type": "debug",
-        "z": "4de057833c59a457",
-        "name": "",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "x": 2130,
+        "id": "152e8caa.eb4a63",
+        "type": "switch",
+        "z": "5546eb2.8913a14",
+        "name": "check",
+        "property": "counter",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 1010,
+        "y": 360,
+        "wires": [
+            [
+                "8412311e.e31b8"
+            ],
+            [
+                "ba695673.c2abc8"
+            ],
+            [
+                "9327c479.2d6a88"
+            ]
+        ]
+    },
+    {
+        "id": "ba695673.c2abc8",
+        "type": "csv",
+        "z": "5546eb2.8913a14",
+        "name": "加速度CSV設定",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "all",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,temperature,report_type,data_x,data_y,data_z,registration_date,update_date",
+        "skip": "0",
+        "strings": false,
+        "x": 1180,
+        "y": 360,
+        "wires": [
+            [
+                "2203f19f.ad62fe"
+            ]
+        ]
+    },
+    {
+        "id": "9327c479.2d6a88",
+        "type": "csv",
+        "z": "5546eb2.8913a14",
+        "name": "温湿度CSV設定",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "all",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,temperature,humidity,registration_date,update_date",
+        "skip": "0",
+        "strings": false,
+        "x": 1180,
+        "y": 400,
+        "wires": [
+            [
+                "2203f19f.ad62fe"
+            ]
+        ]
+    },
+    {
+        "id": "f0519fb2.4de0d",
+        "type": "comment",
+        "z": "5546eb2.8913a14",
+        "name": "各センサのデータを取得",
+        "info": "",
+        "x": 710,
         "y": 320,
         "wires": []
     },
     {
-        "id": "2f4c70d3450aac9f",
+        "id": "e325adb.7a2ec5",
+        "type": "comment",
+        "z": "5546eb2.8913a14",
+        "name": "各センサのデータをPUT",
+        "info": "",
+        "x": 1430,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "f4ea8e15.1d7e",
+        "type": "comment",
+        "z": "5546eb2.8913a14",
+        "name": "各センサのデータをreceivingフォルダからimportフォルダへ移動",
+        "info": "",
+        "x": 1130,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "c003e49a.a26808",
+        "type": "function",
+        "z": "5546eb2.8913a14",
+        "name": "エラーカウンタ初期化",
+        "func": "// @ts-ignore\nflow.set('ERROR_COUNT',0);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 2340,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e93dae8a.6be67",
+        "type": "function",
+        "z": "5546eb2.8913a14",
+        "name": "リトライカウンタ更新",
+        "func": "// @ts-ignore\nmsg.errorcnt = flow.get('ERROR_COUNT')||0;\nmsg.errorcnt += 1;\n// @ts-ignore\nflow.set('ERROR_COUNT', msg.errorcnt);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 440,
+        "y": 140,
+        "wires": [
+            [
+                "c7af61dd.5acf7",
+                "6506d297.c30e9c"
+            ]
+        ]
+    },
+    {
+        "id": "c7af61dd.5acf7",
+        "type": "switch",
+        "z": "5546eb2.8913a14",
+        "name": "リトライチェック",
+        "property": "errorcnt",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gte",
+                "v": "1",
+                "vt": "num"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 690,
+        "y": 140,
+        "wires": [
+            [
+                "50b7bb86.255c94",
+                "5a8a9d51.b46a74"
+            ],
+            [
+                "efc77b39.3bd708"
+            ]
+        ]
+    },
+    {
+        "id": "6506d297.c30e9c",
         "type": "debug",
-        "z": "4de057833c59a457",
-        "name": "",
-        "active": false,
+        "z": "5546eb2.8913a14",
+        "name": "debug 2",
+        "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
         "complete": "true",
         "targetType": "full",
-        "x": 2130,
-        "y": 440,
+        "x": 440,
+        "y": 60,
         "wires": []
     },
     {
-        "id": "d8e17d9560a27605",
-        "type": "debug",
-        "z": "4de057833c59a457",
-        "name": "",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "x": 2130,
-        "y": 560,
+        "id": "970b4c6b.ae518",
+        "type": "comment",
+        "z": "5546eb2.8913a14",
+        "name": "リトライ時はMAX値を設定する",
+        "info": "",
+        "x": 730,
+        "y": 80,
         "wires": []
     },
     {
-        "id": "8688b9b5edf73d41",
+        "id": "5a8a9d51.b46a74",
+        "type": "function",
+        "z": "5546eb2.8913a14",
+        "name": "外部用文面設定",
+        "func": "\nmsg.topic='FTP転送エラーが発生'; //メール件名設定\nmsg.payload = 'FTP転送でエラーが発生 『' + msg.error.message +'』\\n\\n ファイルが送れませんでした。\\n';   //本文\nmsg.to = 't.matsumoto@pound4tec.com';\n// メールヘッダー設定\nmsg.headers = '';\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 980,
+        "y": 140,
+        "wires": [
+            [
+                "7bb58fb057f122d8"
+            ]
+        ]
+    },
+    {
+        "id": "19818ba8.e6f6f4",
+        "type": "file",
+        "z": "5546eb2.8913a14",
+        "name": "転送元ファイル削除",
+        "filename": "localFilename",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "delete",
+        "encoding": "none",
+        "x": 2100,
+        "y": 540,
+        "wires": [
+            [
+                "91dcadfa.3bd4",
+                "c003e49a.a26808"
+            ]
+        ]
+    },
+    {
+        "id": "1bd67f31.945b01",
         "type": "inject",
-        "z": "4de057833c59a457",
-        "name": "3軸加速度死活監視",
-        "repeat": "3600",
+        "z": "5546eb2.8913a14",
+        "name": "",
+        "repeat": "",
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 140,
-        "y": 840,
+        "x": 160,
+        "y": 620,
         "wires": [
             [
-                "ca0fc711b7739c99"
+                "792ff36c.ffb93c",
+                "e27283f3.afa34"
             ]
         ]
     },
     {
-        "id": "ca0fc711b7739c99",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "SQL作成",
-        "func": "//SQL作成\nmsg.topic = \"select count(*) as count, sensor_registration_name from u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date >=  DATE_ADD(NOW(), INTERVAL 9 HOUR) - INTERVAL 65 MINUTE and sensor_id = '00137a10000086f1';\";\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 320,
-        "y": 840,
-        "wires": [
-            [
-                "4814fa3fa486741b"
-            ]
-        ]
-    },
-    {
-        "id": "4814fa3fa486741b",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_type",
-        "x": 500,
-        "y": 840,
-        "wires": [
-            [
-                "258bc8f8171fa98f"
-            ]
-        ]
-    },
-    {
-        "id": "258bc8f8171fa98f",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (\"0\"+(dt.getMonth() + 1)).slice(-2) + '-' +  (\"0\"+dt.getDate()).slice(-2);\nlet time = (\"0\"+(dt.getHours())).slice(-2) + ':' + (\"0\"+(dt.getMinutes())).slice(-2) + ':' + (\"0\"+(dt.getSeconds())).slice(-2);\nlet update = date + ' ' + time;\nflow.set('PROCTIME_07',update);\nflow.set('Count_07',ary[0].count);\nif (ary[0].count > 0) {\n    flow.set('SENNAME_07', ary[0].sensor_registration_name);\n}else{\n    flow.set('SENNAME_07', '00137a10000086f1');\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 710,
-        "y": 840,
-        "wires": [
-            [
-                "cf5d0bb7d24984fd"
-            ]
-        ]
-    },
-    {
-        "id": "a43d0fc83ee2b6e5",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_07') || '00137a10000086f1'; \nmsg.topic = '【警告】3軸加速度センサー（' +sename+ '）からのデータが取得できません';\nmsg.payload = '3軸加速度センサー（' +sename+ '）からのデータが送信されていません。\\n3軸加速度センサーを確認してください。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 2140,
-        "y": 840,
-        "wires": [
-            [
-                "526bdf0a90b71bcf"
-            ]
-        ]
-    },
-    {
-        "id": "6d97479251108fea",
+        "id": "1281e115.65e57f",
         "type": "debug",
-        "z": "4de057833c59a457",
+        "z": "5546eb2.8913a14",
         "name": "",
-        "active": false,
+        "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
         "complete": "true",
         "targetType": "full",
-        "x": 2130,
-        "y": 800,
+        "x": 510,
+        "y": 680,
         "wires": []
     },
     {
-        "id": "c431a07f5c3bd9df",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "文面設定",
-        "func": "let sename = flow.get('SENNAME_07') || '00137a10000086f1'; \nmsg.topic = '【情報】3軸加速度センサー（'+sename+ '）復帰しました。';\nmsg.payload = '3軸加速度センサー（'+sename+ '）からのデータが送信されました。'\nmsg.to = 't.matsumoto@pound4tec.com';\nreturn msg;",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 2140,
-        "y": 880,
-        "wires": [
-            [
-                "526bdf0a90b71bcf"
-            ]
-        ]
-    },
-    {
-        "id": "57b3f64c35ff481c",
-        "type": "switch",
-        "z": "4de057833c59a457",
+        "id": "e27283f3.afa34",
+        "type": "debug",
+        "z": "5546eb2.8913a14",
         "name": "",
-        "property": "count7",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "0",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "2",
-                "vt": "str"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 3,
-        "x": 1990,
-        "y": 840,
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 310,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "792ff36c.ffb93c",
+        "type": "sftp in",
+        "z": "5546eb2.8913a14",
+        "sftp": "9cd024c.e2854d8",
+        "operation": "put",
+        "path": "",
+        "pattern": "",
+        "filename": "",
+        "localFilename": "",
+        "name": "",
+        "x": 370,
+        "y": 620,
         "wires": [
             [
-                "6d97479251108fea"
-            ],
-            [
-                "a43d0fc83ee2b6e5"
-            ],
-            [
-                "c431a07f5c3bd9df"
+                "1281e115.65e57f"
             ]
         ]
     },
     {
-        "id": "deb4c760c9b5f4dd",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態取得",
-        "func": "//SQL作成\nmsg.topic = \"select aliveflg from u9fo72yd0zo6axly.poc_alive_monitoring WHERE sensor_id ='00137a1000008163';\";\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 920,
-        "y": 120,
-        "wires": [
-            [
-                "192bd3346a0b3aa4"
-            ]
-        ]
-    },
-    {
-        "id": "192bd3346a0b3aa4",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "alivemonitoring_Get",
-        "x": 1120,
-        "y": 120,
-        "wires": [
-            [
-                "a6b38eaf9e4c0200"
-            ]
-        ]
-    },
-    {
-        "id": "a6b38eaf9e4c0200",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nmsg.err01 = ary[0].aliveflg;\nlet count = flow.get('Count_01');\n\nmsg.count1 = '1';\nif (count > '0' ){\n    if (msg.err01 == '1') {  //エラーからの復帰\n        msg.count1 = '2';\n    }\n    msg.err01 = '0';\n} else {\n    if(msg.err01 === '0') {\n       msg.count1 = '0';\n    }\n    msg.err01 = '1';\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1370,
-        "y": 120,
-        "wires": [
-            [
-                "90ab804e56131606"
-            ]
-        ]
-    },
-    {
-        "id": "90ab804e56131606",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態設定",
-        "func": "//SQL作成\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (dt.getMonth()+1) + '-' + dt.getDate();\nlet time = dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds();\nlet update = date + ' ' + time;\n\nmsg.topic = \"UPDATE poc_alive_monitoring SET aliveflg = '\"+msg.err01+\"' , update_date = '\"+update+\"' WHERE sensor_id ='00137a1000008163';\";\n\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1580,
-        "y": 120,
-        "wires": [
-            [
-                "83cc585d63c9b565"
-            ]
-        ]
-    },
-    {
-        "id": "83cc585d63c9b565",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_alive",
-        "x": 1760,
-        "y": 120,
-        "wires": [
-            [
-                "ca5b36e46a419e38"
-            ]
-        ]
-    },
-    {
-        "id": "c9bcac48e7d94cee",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態取得",
-        "func": "//SQL作成\nmsg.topic = \"select aliveflg from u9fo72yd0zo6axly.poc_alive_monitoring WHERE sensor_id ='00137a1000003096';\";\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 920,
-        "y": 240,
-        "wires": [
-            [
-                "ec1f7f8e426ab820"
-            ]
-        ]
-    },
-    {
-        "id": "ec1f7f8e426ab820",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "alivemonitoring_Get",
-        "x": 1120,
-        "y": 240,
-        "wires": [
-            [
-                "676d010fc73352f7"
-            ]
-        ]
-    },
-    {
-        "id": "676d010fc73352f7",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nmsg.err02 = ary[0].aliveflg;\nlet count = flow.get('Count_02');\n\nmsg.count2 = '1';\nif (count > '0' ){\n    if (msg.err02 == '1') {  //エラーからの復帰\n        msg.count2 = '2';\n    }\n    msg.err02 = '0';\n} else {\n    if(msg.err02 === '0') {\n       msg.count2 = '0';\n    }\n    msg.err02 = '1';\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1370,
-        "y": 240,
-        "wires": [
-            [
-                "45a2d7e3d0764b33"
-            ]
-        ]
-    },
-    {
-        "id": "45a2d7e3d0764b33",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態設定",
-        "func": "//SQL作成\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (dt.getMonth()+1) + '-' + dt.getDate();\nlet time = dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds();\nlet update = date + ' ' + time;\n\nmsg.topic = \"UPDATE poc_alive_monitoring SET aliveflg = '\"+msg.err02+\"' , update_date = '\"+update+\"' WHERE sensor_id ='00137a1000003096';\";\n\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1580,
-        "y": 240,
-        "wires": [
-            [
-                "5feed8c056ba3910"
-            ]
-        ]
-    },
-    {
-        "id": "5feed8c056ba3910",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_alive",
-        "x": 1760,
-        "y": 240,
-        "wires": [
-            [
-                "ee779ca778e0105f"
-            ]
-        ]
-    },
-    {
-        "id": "f634cc5e59c31a53",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態取得",
-        "func": "//SQL作成\nmsg.topic = \"select aliveflg from u9fo72yd0zo6axly.poc_alive_monitoring WHERE sensor_id ='00137a1000020d6e';\";\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 920,
+        "id": "160296a7.fd69b9",
+        "type": "sftp in",
+        "z": "5546eb2.8913a14",
+        "sftp": "9cd024c.e2854d8",
+        "operation": "put",
+        "path": "",
+        "pattern": "",
+        "filename": "",
+        "localFilename": "",
+        "name": "SFTP receiving-PUT",
+        "x": 1860,
         "y": 360,
         "wires": [
             [
-                "32f3132c66240092"
+                "be83963d.108f58"
             ]
         ]
     },
     {
-        "id": "32f3132c66240092",
+        "id": "7768847f.25bd0c",
+        "type": "sftp in",
+        "z": "5546eb2.8913a14",
+        "sftp": "9cd024c.e2854d8",
+        "operation": "get",
+        "path": "",
+        "pattern": "",
+        "filename": "",
+        "localFilename": "",
+        "name": "SFTP receiving-get",
+        "x": 1230,
+        "y": 540,
+        "wires": [
+            [
+                "4805fe6.fdf5"
+            ]
+        ]
+    },
+    {
+        "id": "4805fe6.fdf5",
+        "type": "sftp in",
+        "z": "5546eb2.8913a14",
+        "sftp": "9cd024c.e2854d8",
+        "operation": "delete",
+        "path": "",
+        "pattern": "",
+        "filename": "",
+        "localFilename": "",
+        "name": "SFTP receiving-delete",
+        "x": 1440,
+        "y": 540,
+        "wires": [
+            [
+                "c61df931.18c3b8"
+            ]
+        ]
+    },
+    {
+        "id": "4869d8a1.fb3ea8",
+        "type": "sftp in",
+        "z": "5546eb2.8913a14",
+        "sftp": "9cd024c.e2854d8",
+        "operation": "put",
+        "path": "",
+        "pattern": "",
+        "filename": "",
+        "localFilename": "",
+        "name": "SFTP import-put",
+        "x": 1880,
+        "y": 540,
+        "wires": [
+            [
+                "19818ba8.e6f6f4"
+            ]
+        ]
+    },
+    {
+        "id": "6c148e3d.1963b",
         "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "alivemonitoring_Get",
-        "x": 1120,
+        "z": "5546eb2.8913a14",
+        "mydb": "ce92506d.eb7cc",
+        "name": "SQL発行",
+        "x": 880,
         "y": 360,
         "wires": [
             [
-                "d1e79da1cb3468b5"
+                "152e8caa.eb4a63"
             ]
         ]
     },
     {
-        "id": "d1e79da1cb3468b5",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nmsg.err03 = ary[0].aliveflg;\nlet count = flow.get('Count_03');\n\nmsg.count3 = '1';\nif (count > '0' ){\n    if (msg.err03 == '1') {  //エラーからの復帰\n        msg.count3 = '2';\n    }\n    msg.err03 = '0';\n} else {\n    if(msg.err03 === '0') {\n       msg.count3 = '0';\n    }\n    msg.err03 = '1';\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1370,
-        "y": 360,
-        "wires": [
-            [
-                "409edf565f6a5ec2"
-            ]
-        ]
-    },
-    {
-        "id": "409edf565f6a5ec2",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態設定",
-        "func": "//SQL作成\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (dt.getMonth()+1) + '-' + dt.getDate();\nlet time = dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds();\nlet update = date + ' ' + time;\n\nmsg.topic = \"UPDATE poc_alive_monitoring SET aliveflg = '\"+msg.err03+\"' , update_date = '\"+update+\"' WHERE sensor_id ='00137a1000020d6e';\";\n\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1580,
-        "y": 360,
-        "wires": [
-            [
-                "1002ef4e678ab24d"
-            ]
-        ]
-    },
-    {
-        "id": "1002ef4e678ab24d",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_alive",
-        "x": 1760,
-        "y": 360,
-        "wires": [
-            [
-                "512ff191f8018d75"
-            ]
-        ]
-    },
-    {
-        "id": "71a517cf0250d15a",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態取得",
-        "func": "//SQL作成\nmsg.topic = \"select aliveflg from u9fo72yd0zo6axly.poc_alive_monitoring WHERE sensor_id ='00137a1000020d6f';\";\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 920,
-        "y": 480,
-        "wires": [
-            [
-                "483367f3fa55f4e2"
-            ]
-        ]
-    },
-    {
-        "id": "483367f3fa55f4e2",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "alivemonitoring_Get",
-        "x": 1120,
-        "y": 480,
-        "wires": [
-            [
-                "8ac829eed63f9743"
-            ]
-        ]
-    },
-    {
-        "id": "8ac829eed63f9743",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nmsg.err04 = ary[0].aliveflg;\nlet count = flow.get('Count_04');\n\nmsg.count4 = '1';\nif (count > '0' ){\n    if (msg.err04 == '1') {  //エラーからの復帰\n        msg.count4 = '2';\n    }\n    msg.err04 = '0';\n} else {\n    if(msg.err04 === '0') {\n       msg.count4 = '0';\n    }\n    msg.err04 = '1';\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1370,
-        "y": 480,
-        "wires": [
-            [
-                "83689f2477d04603"
-            ]
-        ]
-    },
-    {
-        "id": "83689f2477d04603",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態設定",
-        "func": "//SQL作成\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (dt.getMonth()+1) + '-' + dt.getDate();\nlet time = dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds();\nlet update = date + ' ' + time;\n\nmsg.topic = \"UPDATE poc_alive_monitoring SET aliveflg = '\"+msg.err04+\"' , update_date = '\"+update+\"' WHERE sensor_id ='00137a1000020d6f';\";\n\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1580,
-        "y": 480,
-        "wires": [
-            [
-                "2d14efe7a4d6fdbf"
-            ]
-        ]
-    },
-    {
-        "id": "2d14efe7a4d6fdbf",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_alive",
-        "x": 1760,
-        "y": 480,
-        "wires": [
-            [
-                "6fcdbb6c8f1fd147"
-            ]
-        ]
-    },
-    {
-        "id": "298c751ed2e38fd3",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態取得",
-        "func": "//SQL作成\nmsg.topic = \"select aliveflg from u9fo72yd0zo6axly.poc_alive_monitoring WHERE sensor_id ='00137a1000020d70';\";\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 920,
-        "y": 600,
-        "wires": [
-            [
-                "58dbefe818b9d28a"
-            ]
-        ]
-    },
-    {
-        "id": "58dbefe818b9d28a",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "alivemonitoring_Get",
-        "x": 1120,
-        "y": 600,
-        "wires": [
-            [
-                "6baa4abd2e2fd663"
-            ]
-        ]
-    },
-    {
-        "id": "6baa4abd2e2fd663",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nmsg.err05 = ary[0].aliveflg;\nlet count = flow.get('Count_05');\n\nmsg.count5 = '1';\nif (count > '0' ){\n    if (msg.err05 == '1') {  //エラーからの復帰\n        msg.count5 = '2';\n    }\n    msg.err05 = '0';\n} else {\n    if(msg.err05 === '0') {\n       msg.count5 = '0';\n    }\n    msg.err05 = '1';\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1370,
-        "y": 600,
-        "wires": [
-            [
-                "833b4b30fce7e0f9"
-            ]
-        ]
-    },
-    {
-        "id": "833b4b30fce7e0f9",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態設定",
-        "func": "//SQL作成\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (dt.getMonth()+1) + '-' + dt.getDate();\nlet time = dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds();\nlet update = date + ' ' + time;\n\nmsg.topic = \"UPDATE poc_alive_monitoring SET aliveflg = '\"+msg.err05+\"' , update_date = '\"+update+\"' WHERE sensor_id ='00137a1000020d70';\";\n\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1580,
-        "y": 600,
-        "wires": [
-            [
-                "94da89ed6c84fc85"
-            ]
-        ]
-    },
-    {
-        "id": "94da89ed6c84fc85",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_alive",
-        "x": 1760,
-        "y": 600,
-        "wires": [
-            [
-                "2f8e7daad25607da"
-            ]
-        ]
-    },
-    {
-        "id": "cfb518f310471373",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態取得",
-        "func": "//SQL作成\nmsg.topic = \"select aliveflg from u9fo72yd0zo6axly.poc_alive_monitoring WHERE sensor_id ='00137a1000020d6d';\";\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 920,
-        "y": 720,
-        "wires": [
-            [
-                "1b3c7e6c54ab2880"
-            ]
-        ]
-    },
-    {
-        "id": "1b3c7e6c54ab2880",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "alivemonitoring_Get",
-        "x": 1120,
-        "y": 720,
-        "wires": [
-            [
-                "690a11cee3baef2e"
-            ]
-        ]
-    },
-    {
-        "id": "690a11cee3baef2e",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nmsg.err06 = ary[0].aliveflg;\nlet count = flow.get('Count_06');\n\nmsg.count6 = '1';\nif (count > '0' ){\n    if (msg.err06 == '1') {  //エラーからの復帰\n        msg.count6 = '2';\n    }\n    msg.err06 = '0';\n} else {\n    if(msg.err06 === '0') {\n       msg.count6 = '0';\n    }\n    msg.err06 = '1';\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1370,
-        "y": 720,
-        "wires": [
-            [
-                "6d130b2685a47639"
-            ]
-        ]
-    },
-    {
-        "id": "6d130b2685a47639",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態設定",
-        "func": "//SQL作成\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (dt.getMonth()+1) + '-' + dt.getDate();\nlet time = dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds();\nlet update = date + ' ' + time;\n\nmsg.topic = \"UPDATE poc_alive_monitoring SET aliveflg = '\"+msg.err06+\"' , update_date = '\"+update+\"' WHERE sensor_id ='00137a1000020d6d';\";\n\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1580,
-        "y": 720,
-        "wires": [
-            [
-                "77081a33adb1d39a"
-            ]
-        ]
-    },
-    {
-        "id": "77081a33adb1d39a",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "tbl_sensor_alive",
-        "x": 1760,
-        "y": 720,
-        "wires": [
-            [
-                "4c4a489b2bf00f2a"
-            ]
-        ]
-    },
-    {
-        "id": "cf5d0bb7d24984fd",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態取得",
-        "func": "//SQL作成\nmsg.topic = \"select aliveflg from u9fo72yd0zo6axly.poc_alive_monitoring WHERE sensor_id ='00137a10000086f1';\";\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 920,
-        "y": 840,
-        "wires": [
-            [
-                "51d9eb1561060fbe"
-            ]
-        ]
-    },
-    {
-        "id": "51d9eb1561060fbe",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "alivemonitoring_Get",
-        "x": 1120,
-        "y": 840,
-        "wires": [
-            [
-                "2d4270afa3950d94"
-            ]
-        ]
-    },
-    {
-        "id": "2d4270afa3950d94",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "tbl_sensor_type情報取得",
-        "func": "let ary = msg.payload;\nmsg.err07 = ary[0].aliveflg;\nlet count = flow.get('Count_07');\n\nmsg.count7 = '1';\nif (count > '0' ){\n    if (msg.err07 == '1') {  //エラーからの復帰\n        msg.count7 = '2';\n    }\n    msg.err07 = '0';\n} else {\n    if(msg.err07 === '0') {\n       msg.count7 = '0';\n    }\n    msg.err07 = '1';\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1410,
-        "y": 840,
-        "wires": [
-            [
-                "12427228b59bce7d"
-            ]
-        ]
-    },
-    {
-        "id": "12427228b59bce7d",
-        "type": "function",
-        "z": "4de057833c59a457",
-        "name": "死活状態設定",
-        "func": "//SQL作成\nconst dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + '-' + (dt.getMonth()+1) + '-' + dt.getDate();\nlet time = dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds();\nlet update = date + ' ' + time;\n\nmsg.topic = \"UPDATE poc_alive_monitoring SET aliveflg = '\"+msg.err07+\"' , update_date = '\"+update+\"' WHERE sensor_id ='00137a10000086f1';\";\n\nreturn msg;\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1640,
-        "y": 840,
-        "wires": [
-            [
-                "e6a662eaa1747e2c"
-            ]
-        ]
-    },
-    {
-        "id": "e6a662eaa1747e2c",
-        "type": "mysql",
-        "z": "4de057833c59a457",
-        "mydb": "1848aaaf.9865bd",
-        "name": "alivemonitoring_Put",
-        "x": 1830,
-        "y": 840,
-        "wires": [
-            [
-                "57b3f64c35ff481c"
-            ]
-        ]
-    },
-    {
-        "id": "526bdf0a90b71bcf",
+        "id": "7bb58fb057f122d8",
         "type": "e-mail",
-        "z": "4de057833c59a457",
+        "z": "5546eb2.8913a14",
         "server": "smtp.gmail.com",
         "port": "465",
         "authtype": "BASIC",
@@ -1633,14 +775,30 @@
         "tls": true,
         "name": "",
         "dname": "",
-        "x": 2430,
-        "y": 460,
+        "x": 1190,
+        "y": 120,
         "wires": []
     },
     {
-        "id": "1848aaaf.9865bd",
+        "id": "9cd024c.e2854d8",
+        "type": "sftp",
+        "host": "patro-st1.monoplus.cloud",
+        "port": "50022",
+        "forceIPv4": false,
+        "forceIPv6": false,
+        "username": "sensor",
+        "privateKey": "id_ed25519",
+        "readyTimeout": "",
+        "strictVendor": true,
+        "debug": "// function - Set this to a function that receives a single \n// string argument to get detailed (local) debug information.",
+        "retries": "",
+        "retry_factor": "",
+        "retry_minTimeout": ""
+    },
+    {
+        "id": "ce92506d.eb7cc",
         "type": "MySQLdatabase",
-        "name": "u9fo72yd0zo6axly",
+        "name": "",
         "host": "kfgk8u2ogtoylkq9.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
         "port": "3306",
         "db": "u9fo72yd0zo6axly",
