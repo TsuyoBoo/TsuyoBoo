@@ -117,7 +117,7 @@
                 "6976056b.db3dfc"
             ],
             [
-                "88db2057.18a5b"
+                "e27283f3.afa34"
             ]
         ]
     },
@@ -142,8 +142,16 @@
         "id": "6257a728.8ca448",
         "type": "inject",
         "z": "5546eb2.8913a14",
-        "d": true,
         "name": "毎日1時実行",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
         "repeat": "",
         "crontab": "00 01 * * *",
         "once": false,
@@ -166,7 +174,11 @@
         "name": "データ取得SQL作成",
         "func": "let strsql = '';\n// @ts-ignore\nif (msg.counter === 0) {\n    strsql = \"SELECT user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,illuminance_status,DATE_FORMAT(registration_date,'%Y-%m-%d %H:%i:%s') AS registration_date,DATE_FORMAT(update_date,'%Y-%m-%d %H:%i:%s') aS update_date FROM u9fo72yd0zo6axly.u00001_tbl_illuminance_history WHERE received_date BETWEEN DATE(SYSDATE() + INTERVAL 9 HOUR) - INTERVAL 1 DAY AND DATE(SYSDATE() + INTERVAL 9 HOUR);\";\n} else if (msg.counter === 1) {\n    strsql = \"SELECT user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,temperature,report_type,data_x,data_y,data_z,DATE_FORMAT(registration_date,'%Y-%m-%d %H:%i:%s') AS registration_date,DATE_FORMAT(update_date,'%Y-%m-%d %H:%i:%s') aS update_date FROM  u9fo72yd0zo6axly.u00001_tbl_three_axis_history WHERE received_date BETWEEN DATE(SYSDATE() + INTERVAL 9 HOUR) - INTERVAL 1 DAY AND DATE(SYSDATE() + INTERVAL 9 HOUR);\";\n} else {\n    strsql = \"SELECT user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,temperature,humidity,DATE_FORMAT(registration_date,'%Y-%m-%d %H:%i:%s') AS registration_date,DATE_FORMAT(update_date,'%Y-%m-%d %H:%i:%s') aS update_date FROM u9fo72yd0zo6axly.u00001_tbl_tem_hum_measurement_history WHERE received_date BETWEEN DATE(SYSDATE() + INTERVAL 9 HOUR) - INTERVAL 1 DAY AND DATE(SYSDATE() + INTERVAL 9 HOUR);\";\n}\nmsg.topic = strsql;\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
         "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 700,
         "y": 360,
         "wires": [
@@ -188,6 +200,8 @@
         "temp": "user_id,sensor_id,sensor_registration_name,received_date,alarm_type,battery_level,illuminance_status,registration_date,update_date",
         "skip": "0",
         "strings": false,
+        "include_empty_strings": false,
+        "include_null_values": false,
         "x": 1180,
         "y": 320,
         "wires": [
@@ -201,9 +215,13 @@
         "type": "function",
         "z": "5546eb2.8913a14",
         "name": "センサファイル名作成",
-        "func": "let date = new Date();\nlet d1 = date.getFullYear() + ('0' + (date.getMonth() + 1)).slice(-2) + ('0' + date.getDate()).slice(-2) + ('0' + date.getHours()).slice(-2) + ('0' + date.getMinutes()).slice(-2) + ('0' + date.getSeconds()).slice(-2) ;\nlet f_name = '';\nlet comname = '';\n\nif (msg.counter === 0) {\n   comname =\"LUX_SENSOR_FNAME\";\n    f_name = \"LUX_SENSOR_\" + d1 + \".csv\";\n} else if (msg.counter === 1) {\n    comname = \"ACC_SENSOR_FNAME\";\n    f_name = \"ACC_SENSOR_\" + d1 + \".csv\";\n} else {\n    comname = \"TEMP_HUM_FNAME\";\n    f_name = \"TEMP_HUM_SENSOR_\" + d1 + \".csv\";\n}\n// @ts-ignore\nflow.set(comname, f_name); //照度ファイル名\n\nmsg.filename = f_name;\nmsg.localFilename = \"/receiving/\" + f_name;\nlet str = msg.payload;\nmsg.payload = str.replace(/\"/g,'');\nreturn msg;",
+        "func": "const dt = new Date(Date.now() + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000));\nlet date = dt.getFullYear() + ('0' + (dt.getMonth() + 1)).slice(-2) + ('0' + dt.getDate()).slice(-2);\nlet time = ('0' + dt.getHours()).slice(-2) + ('0' + dt.getMinutes()).slice(-2) + ('0' + dt.getSeconds()).slice(-2);\nlet d1 = date + time;\n\nlet f_name = '';\nlet comname = '';\n\nif (msg.counter === 0) {\n   comname =\"LUX_SENSOR_FNAME\";\n    f_name = \"LUX_SENSOR_\" + d1 + \".csv\";\n} else if (msg.counter === 1) {\n    comname = \"ACC_SENSOR_FNAME\";\n    f_name = \"ACC_SENSOR_\" + d1 + \".csv\";\n} else {\n    comname = \"TEMP_HUM_FNAME\";\n    f_name = \"TEMP_HUM_SENSOR_\" + d1 + \".csv\";\n}\n// @ts-ignore\nflow.set(comname, f_name); //照度ファイル名\n\nmsg.filename = f_name;\nmsg.localFilename = \"/receiving/\" + f_name;\nlet str = msg.payload;\nmsg.payload = str.replace(/\"/g,'');\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
         "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 1420,
         "y": 360,
         "wires": [
@@ -218,6 +236,7 @@
         "z": "5546eb2.8913a14",
         "name": "転送用ファイル作成",
         "filename": "localFilename",
+        "filenameType": "str",
         "appendNewline": true,
         "createDir": true,
         "overwriteFile": "true",
@@ -226,7 +245,8 @@
         "y": 360,
         "wires": [
             [
-                "160296a7.fd69b9"
+                "be83963d.108f58",
+                "6689977843b2e92e"
             ]
         ]
     },
@@ -281,7 +301,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 660,
+        "x": 680,
         "y": 440,
         "wires": [
             [
@@ -500,7 +520,11 @@
         "name": "リトライカウンタ更新",
         "func": "// @ts-ignore\nmsg.errorcnt = flow.get('ERROR_COUNT')||0;\nmsg.errorcnt += 1;\n// @ts-ignore\nflow.set('ERROR_COUNT', msg.errorcnt);\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
         "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 440,
         "y": 140,
         "wires": [
@@ -683,7 +707,7 @@
         "filename": "",
         "localFilename": "",
         "name": "SFTP receiving-PUT",
-        "x": 1860,
+        "x": 2000,
         "y": 360,
         "wires": [
             [
@@ -749,6 +773,23 @@
         ]
     },
     {
+        "id": "7bb58fb057f122d8",
+        "type": "e-mail",
+        "z": "5546eb2.8913a14",
+        "server": "smtp.gmail.com",
+        "port": "465",
+        "authtype": "BASIC",
+        "saslformat": true,
+        "token": "oauth2Response.access_token",
+        "secure": true,
+        "tls": true,
+        "name": "",
+        "dname": "",
+        "x": 1210,
+        "y": 120,
+        "wires": []
+    },
+    {
         "id": "6c148e3d.1963b",
         "type": "mysql",
         "z": "5546eb2.8913a14",
@@ -763,20 +804,18 @@
         ]
     },
     {
-        "id": "7bb58fb057f122d8",
-        "type": "e-mail",
+        "id": "6689977843b2e92e",
+        "type": "debug",
         "z": "5546eb2.8913a14",
-        "server": "smtp.gmail.com",
-        "port": "465",
-        "authtype": "BASIC",
-        "saslformat": true,
-        "token": "oauth2Response.access_token",
-        "secure": true,
-        "tls": true,
         "name": "",
-        "dname": "",
-        "x": 1190,
-        "y": 120,
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 1810,
+        "y": 420,
         "wires": []
     },
     {
