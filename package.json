@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "node-red": "^3.0.2"
+    "node-red": "^3.0.2",
     "node-red-contrib-ftp": "^0.0.8",
     "node-red-node-email": "^3.0.1",
     "node-red-node-mysql": "^2.0.0"
