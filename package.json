@@ -1,7 +1,18 @@
 {
   "name": "node-red-poc",
   "version": "1.0.0",
-  "description": "",
+  "dependencies": {
+    "when": "~3.x",
+    "pg": "^8.3.0",
+    "nano": "~5.11.0",
+    "feedparser":"~0.19.2",
+    "redis":"~0.10.1",
+    "node-red": "~1.x",
+    "node-red-contrib-ftp": "~0.x",
+    "node-red-node-email": "~3.x",
+    "node-red-node-mysql": "~2.x"
+  }
+,
   "main": "index.js",
   "scripts": {
     "start": "node node_modules/node-red/red.js",
