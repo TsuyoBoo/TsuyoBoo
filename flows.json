@@ -117,7 +117,7 @@
                 "6976056b.db3dfc"
             ],
             [
-                "e27283f3.afa34"
+                "88db2057.18a5b"
             ]
         ]
     },
@@ -245,8 +245,8 @@
         "y": 360,
         "wires": [
             [
-                "be83963d.108f58",
-                "6689977843b2e92e"
+                "6689977843b2e92e",
+                "160296a7.fd69b9"
             ]
         ]
     },
@@ -370,7 +370,16 @@
         "type": "inject",
         "z": "5546eb2.8913a14",
         "d": true,
-        "name": "",
+        "name": "検証用",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
         "repeat": "",
         "crontab": "",
         "once": false,
@@ -378,7 +387,7 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 180,
+        "x": 150,
         "y": 100,
         "wires": [
             [
@@ -630,7 +639,16 @@
         "id": "1bd67f31.945b01",
         "type": "inject",
         "z": "5546eb2.8913a14",
-        "name": "",
+        "name": "検証用",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
         "repeat": "",
         "crontab": "",
         "once": false,
@@ -638,7 +656,7 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 160,
+        "x": 130,
         "y": 620,
         "wires": [
             [
@@ -675,6 +693,21 @@
         "targetType": "full",
         "x": 310,
         "y": 540,
+        "wires": []
+    },
+    {
+        "id": "6689977843b2e92e",
+        "type": "debug",
+        "z": "5546eb2.8913a14",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 1810,
+        "y": 420,
         "wires": []
     },
     {
@@ -802,21 +835,6 @@
                 "152e8caa.eb4a63"
             ]
         ]
-    },
-    {
-        "id": "6689977843b2e92e",
-        "type": "debug",
-        "z": "5546eb2.8913a14",
-        "name": "",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "x": 1810,
-        "y": 420,
-        "wires": []
     },
     {
         "id": "9cd024c.e2854d8",
