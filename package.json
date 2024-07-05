@@ -2,15 +2,10 @@
   "name": "node-red-poc",
   "version": "1.0.0",
   "dependencies": {
-    "when": "~3.x",
-    "pg": "^8.3.0",
-    "nano": "~5.11.0",
-    "feedparser":"~0.19.2",
-    "redis":"~0.10.1",
-    "node-red": "~1.x",
-    "node-red-contrib-ftp": "~0.x",
-    "node-red-node-email": "~3.x",
-    "node-red-node-mysql": "~2.x"
+    "node-red": "3.1.11",
+    "node-red-contrib-ftp": "0.0.8",
+    "node-red-node-email": "3.0.1",
+    "node-red-node-mysql": "2.0.0"
   }
 ,
   "main": "index.js",
